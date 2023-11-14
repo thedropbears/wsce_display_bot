@@ -1,7 +1,7 @@
 #include <Arduino.h>
 
-#include "include/components/pitcher.hpp"
-#include "include/robot_defs.hpp"
+#include "pitcher.hpp"
+#include "robot_defs.hpp"
 
 Pitcher::Pitcher(Servo &motor) : motor_speed_pulse_(MOTOR_PULSE_STOP_)
 {

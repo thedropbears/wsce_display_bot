@@ -1,7 +1,7 @@
 #include <Arduino.h>
 
-#include "include/components/shooter.hpp"
-#include "include/robot_defs.hpp"
+#include "shooter.hpp"
+#include "robot_defs.hpp"
 
 Shooter::Shooter(Servo &flywheel_motor) : flywheel_motor_speed_(MOTOR_PULSE_STOP_)
 {
