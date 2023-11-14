@@ -2,8 +2,8 @@
 
 #include <Servo.h>
 
-#include "include/components/intake.hpp"
-#include "include/robot_defs.hpp"
+#include "intake.hpp"
+#include "robot_defs.hpp"
 
 Intake::Intake(Servo &motor)
     : motor_speed_pulse_(MOTOR_PULSE_STOP_), upper_limit_switch_(PITCHER_UPPER_LIMIT_PIN),

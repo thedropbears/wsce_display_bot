@@ -1,8 +1,8 @@
 
-#include "include/components/intake.hpp"
-#include "include/components/pitcher.hpp"
-#include "include/components/shooter.hpp"
-#include "include/robot_defs.hpp"
+#include "intake.hpp"
+#include "pitcher.hpp"
+#include "shooter.hpp"
+#include "robot_defs.hpp"
 
 typedef enum
 {
