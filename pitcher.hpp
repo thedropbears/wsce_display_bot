@@ -3,25 +3,26 @@
 
 #include <Servo.h>
 
-class Pitcher {
+class Pitcher
+{
 public:
-  Pitcher(Servo &motor);
-  ~Pitcher();
-  void tick();
+    Pitcher(Servo &motor);
+    ~Pitcher();
+    void tick();
 
-  void raise();
-  void lower();
+    void raise();
+    void lower();
 
 private:
-  bool at_lower_limit();
-  bool at_upper_limit();
+    bool at_lower_limit();
+    bool at_upper_limit();
 
-  unsigned int upper_limit_switch_;
-  unsigned int lower_limit_switch_;
+    unsigned int upper_limit_switch_;
+    unsigned int lower_limit_switch_;
 
-  Servo *motor_;
+    Servo *motor_;
 
-  unsigned int motor_speed_pulse_;
+    unsigned int motor_speed_pulse_;
 };
 
 #endif

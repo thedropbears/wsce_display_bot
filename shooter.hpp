@@ -3,19 +3,20 @@
 
 #include <Servo.h>
 
-class Shooter {
+class Shooter
+{
 public:
-  Shooter(Servo &flywheel_motor);
-  ~Shooter();
-  void tick();
+    Shooter(Servo &flywheel_motor);
+    ~Shooter();
+    void tick();
 
-  void load();
-  void shoot();
-  void stop();
+    void load();
+    void shoot();
+    void stop();
 
 private:
-  Servo *flywheel_motor_;
-  unsigned int flywheel_motor_speed_;
+    Servo       *flywheel_motor_;
+    unsigned int flywheel_motor_speed_;
 };
 
 #endif

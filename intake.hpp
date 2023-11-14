@@ -3,22 +3,23 @@
 
 #include <Servo.h>
 
-class Intake {
+class Intake
+{
 public:
-  Intake(Servo &motor);
-  ~Intake();
-  void tick();
+    Intake(Servo &motor);
+    ~Intake();
+    void tick();
 
-  void spin();
-  void stop();
+    void spin();
+    void stop();
 
 private:
-  unsigned int upper_limit_switch_;
-  unsigned int lower_limit_switch_;
+    unsigned int upper_limit_switch_;
+    unsigned int lower_limit_switch_;
 
-  Servo *motor_;
+    Servo *motor_;
 
-  unsigned int motor_speed_pulse_;
+    unsigned int motor_speed_pulse_;
 };
 
 #endif
