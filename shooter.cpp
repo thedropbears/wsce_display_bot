@@ -12,7 +12,6 @@ Shooter::Shooter(Servo &flywheel_motor) : flywheel_motor_speed_(MOTOR_PULSE_STOP
 Shooter::~Shooter()
 {
     flywheel_motor_->detach();
-    // delete flywheel_motor_;
 }
 
 void Shooter::load()

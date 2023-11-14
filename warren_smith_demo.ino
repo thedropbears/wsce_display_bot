@@ -58,8 +58,6 @@ void setup()
     intake  = new Intake(intake_motor);
     shooter = new Shooter(shooter_flywheel);
     pitcher = new Pitcher(pitcher_motor);
-
-    Serial.begin(9600);
 }
 
 void loop()
@@ -113,6 +111,5 @@ void loop()
         pitcher->tick();
 
         last_tick_time = millis();
-        Serial.println(last_tick_time);
     }
 }

@@ -12,7 +12,6 @@ Pitcher::Pitcher(Servo &motor) : motor_speed_pulse_(MOTOR_PULSE_STOP_)
 Pitcher::~Pitcher()
 {
     motor_->detach();
-    // delete motor_;
 }
 
 void Pitcher::raise()

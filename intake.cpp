@@ -17,7 +17,6 @@ Intake::Intake(Servo &motor)
 Intake::~Intake()
 {
     motor_->detach();
-    // delete motor_;
 }
 
 void Intake::spin()
@@ -32,9 +31,5 @@ void Intake::stop()
 
 void Intake::tick()
 {
-    // motor_speed_pulse_ = MOTOR_PULSE_STOP_;
     motor_->writeMicroseconds(motor_speed_pulse_);
-
-    // Serial.print("Current Motor Speed ");
-    // Serial.println(motor_speed_pulse_);
 }
