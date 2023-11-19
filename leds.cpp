@@ -46,6 +46,11 @@ void AddressableLeds::set_frequency(double new_pattern_cycle_frequency)
 void AddressableLeds::calc_rainbow_()
 {
     unsigned int times_to_increment = (millis() - last_tick_time_) / pattern_update_period_ms_;
+    if (times_to_increment > 0)
+    {
+        last_tick_time_ = millis();
+    }
+
     pixel_phase_offset += led_motion_ * times_to_increment * resolution_;
 
     // keep phase within pi to -pi range
