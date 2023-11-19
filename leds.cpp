@@ -40,7 +40,7 @@ void AddressableLeds::tick()
 
 void AddressableLeds::set_frequency(double new_pattern_cycle_frequency)
 {
-    pattern_update_period_ms_ = (1 / (new_pattern_cycle_frequency * led_count)) * 1000
+    pattern_update_period_ms_ = (1 / (new_pattern_cycle_frequency * led_count_)) * 1000;
 }
 
 void AddressableLeds::calc_rainbow_()
