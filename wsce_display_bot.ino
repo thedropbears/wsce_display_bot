@@ -64,7 +64,7 @@ void setup()
     shooter = new Shooter(shooter_flywheel);
     pitcher = new Pitcher(pitcher_motor);
     leds    = new AddressableLeds(CHASSIS_LEDS_PIN, CHASSIS_LEDS_LENGTH);
-    leds->set_frequency(5.0);
+    leds->set_frequency(1.0);
 }
 
 void loop()
