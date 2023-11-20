@@ -70,7 +70,7 @@ void setup()
 void loop()
 {
     // put your main code here, to run repeatedly:
-    if ((millis() - last_tick_time) > 200)
+    if ((millis() - last_tick_time) > 20)
     {
         if ((millis() - last_state_transition_time) > 5000U)
         {
