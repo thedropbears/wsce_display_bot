@@ -82,6 +82,10 @@ void setup()
     shooter_motor.attach(SHOOTER_MOTOR_PIN);
     tilt_motor.attach(TILT_MOTOR_PIN);
 
+    chassis_leds->begin();
+    intake_leds->begin();
+    shooter_leds->begin();
+
     cycle_start_millis = millis();
 }
 
