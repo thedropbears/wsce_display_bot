@@ -33,7 +33,25 @@ constexpr auto TILT_LOWER_LIMIT_PIN = 6U;
 // This is a value in the range (0,1]
 
 /* LED routines */
-void rainbow(const double phase, Adafruit_NeoPixel *leds) {}
+void rainbow(const double phase, Adafruit_NeoPixel *leds)
+{
+
+    double rainbow_phase    = 20 * phase;
+    rainbow_phase           = rainbow_phase - (int)rainbow_phase;
+    const double resolution = 1.0 / leds->numPixels();
+
+    for (int i = 0; i < leds->numPixels(); i++)
+    {
+        // remap phased hue to be within 0 and 1
+        double hue_scale = (i * resolution + rainbow_phase);
+        hue_scale        = hue_scale - (int)hue_scale;
+
+        // scale and set hue
+        long pixel_hue = 65535 * hue_scale;
+        leds->setPixelColor(i, leds->gamma32(leds->ColorHSV(pixel_hue)));
+    }
+    leds->show();
+}
 
 /* Motor routines */
 
