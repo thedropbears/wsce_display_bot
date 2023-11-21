@@ -21,3 +21,4 @@ jobs:
             - ./
           libraries: |
             - name: Servo
+            - name: Adafruit NeoPixel
