@@ -28,22 +28,24 @@ constexpr auto SHOOTER_LEDS_LENGTH = 247U;
 
 constexpr auto TILT_UPPER_LIMIT_PIN = 5U;
 constexpr auto TILT_LOWER_LIMIT_PIN = 6U;
+constexpr auto MOTOR_ENABLE_PIN = 7U;
 
 // All routines below take "phase" as an argument
 // This is a value in the range (0,1]
 
+double fractional(const double val) {
+  return val - (int)val;
+}
+
 /* LED routines */
 void rainbow(const double phase, Adafruit_NeoPixel *leds)
 {
-
-    double rainbow_phase    = 20 * phase;
-    rainbow_phase           = rainbow_phase - (int)rainbow_phase;
     const double resolution = 1.0 / leds->numPixels();
 
     for (int i = 0; i < leds->numPixels(); i++)
     {
         // remap phased hue to be within 0 and 1
-        double hue_scale = (i * resolution + rainbow_phase);
+        double hue_scale = (i * resolution + phase);
         hue_scale        = hue_scale - (int)hue_scale;
 
         // scale and set hue
@@ -51,6 +53,42 @@ void rainbow(const double phase, Adafruit_NeoPixel *leds)
         leds->setPixelColor(i, leds->gamma32(leds->ColorHSV(pixel_hue)));
     }
     leds->show();
+}
+
+void pulse(const double phase, Adafruit_NeoPixel *leds, const unsigned char r, const unsigned char g, unsigned char b) {
+    const double intensity = phase > 0.5 ? phase * 2.0: (2.0 - phase * 2.0);  // Ramp up then down
+    for (int i = 0; i < leds->numPixels(); i++)
+    {
+      leds->setPixelColor(i, intensity * r, intensity * g, intensity * b);
+    }
+    leds->show();    
+}
+void stripes(const double phase, Adafruit_NeoPixel *leds, const unsigned char r, const unsigned char g, unsigned char b) {
+    const int strip_width = 4;
+    const auto n = leds->numPixels();
+    const unsigned int offset = phase * n/2;
+    int count = 0;
+    for (int i = 0; i < n / 2; i++)
+    {
+      const auto idx = (i + offset) % (n/2); 
+      if (count < strip_width) {
+        leds->setPixelColor(idx, r, g, b);
+        leds->setPixelColor(n - idx, r, g, b);
+      } else {
+        leds->setPixelColor(idx, 0, 0, 0);
+        leds->setPixelColor(n - idx, 0, 0, 0);
+      }
+      count = (count + 1) % (strip_width * 3);
+    }
+    leds->show();    
+}
+void solid(Adafruit_NeoPixel *leds, const unsigned char r, const unsigned char g, const unsigned char b) {
+    const auto n = leds->numPixels();
+    for (int i = 0; i < n; i++)
+    {
+        leds->setPixelColor(i, r, g, b);
+    }
+    leds->show();    
 }
 
 /* Motor routines */
@@ -67,16 +105,27 @@ void tick_motion(const double phase)
     {
         // Pulse all lights as warning
         stop_all_motors();
+        pulse(fractional(phase / 0.05 * 5), intake_leds, 255, 0, 0);
+        solid(shooter_leds, 0, 0, 0);
+        solid(chassis_leds, 100, 100, 100);
     }
-    else if (phase < 0.1)
+    else if (phase < 0.15)
     {
+        const auto segment_phase = (phase - 0.05) / 0.1;
         // Intake on
+        stripes(fractional(segment_phase), intake_leds, 0, 255, 0);
+        pulse(fractional(segment_phase * 5), shooter_leds, 255, 0, 0); 
         // Ramp up...
-        const double duty = (phase - 0.05) / 0.05;
+        const double duty = min(segment_phase * 2, 0.5);
         intake_motor.writeMicroseconds(throttle(duty));
+        shooter_motor.writeMicroseconds(throttle(-0.1));
     }
     else if (phase < 0.25)
     {
+        intake_motor.writeMicroseconds(throttle(0));
+        shooter_motor.writeMicroseconds(throttle(0));
+        solid(intake_leds, 0, 0, 0);
+        
         // More stuff...
     }
 }
@@ -96,6 +145,10 @@ void setup()
     intake_leds  = new Adafruit_NeoPixel(INTAKE_LEDS_LENGTH, INTAKE_LEDS_PIN);
     shooter_leds = new Adafruit_NeoPixel(SHOOTER_LEDS_LENGTH, SHOOTER_LEDS_PIN);
 
+    pinMode(TILT_UPPER_LIMIT_PIN, INPUT_PULLUP);
+    pinMode(TILT_LOWER_LIMIT_PIN, INPUT_PULLUP);
+    pinMode(MOTOR_ENABLE_PIN, INPUT_PULLUP);
+
     intake_motor.attach(INTAKE_MOTOR_PIN);
     shooter_motor.attach(SHOOTER_MOTOR_PIN);
     tilt_motor.attach(TILT_MOTOR_PIN);
@@ -111,15 +164,16 @@ void loop()
 {
     const auto dt = millis() - cycle_start_millis;
 
-    const auto motors_enabled = false; // TODO - read the switch
+    const auto motors_enabled = digitalRead(MOTOR_ENABLE_PIN) == LOW;
 
     if (dt < LIGHTS_ONLY_CYCLE_TIME)
     {
         // Just run the light show for the first x seconds
         const auto phase = 1.0 * dt / LIGHTS_ONLY_CYCLE_TIME;
-        rainbow(phase, chassis_leds);
-        rainbow(phase, intake_leds);
-        rainbow(phase, shooter_leds);
+        double rainbow_phase    = fractional(1.0 * LIGHTS_ONLY_CYCLE_TIME / 1500 * phase);  // one cycle per 1.5s
+        rainbow(rainbow_phase, chassis_leds);
+        rainbow(rainbow_phase, intake_leds);
+        rainbow(rainbow_phase, shooter_leds);
         stop_all_motors();
     }
     else if (motors_enabled && dt < (LIGHTS_ONLY_CYCLE_TIME + MOTORS_CYCLE_TIME))
