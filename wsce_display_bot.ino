@@ -3,6 +3,7 @@
 #include "pitcher.hpp"
 #include "shooter.hpp"
 #include "robot_defs.hpp"
+#include "leds.hpp"
 
 typedef enum
 {
@@ -15,9 +16,10 @@ Servo shooter_flywheel;
 Servo intake_motor;
 Servo pitcher_motor;
 
-Intake  *intake;  //{intake_motor};
-Shooter *shooter; //{shooter_flywheel};
-Pitcher *pitcher; //{pitcher_motor};
+Intake          *intake;  //{intake_motor};
+Shooter         *shooter; //{shooter_flywheel};
+Pitcher         *pitcher; //{pitcher_motor};
+AddressableLeds *leds;
 
 unsigned long last_state_transition_time;
 unsigned long last_tick_time;
@@ -30,6 +32,7 @@ void intake_callback()
     pitcher->lower();
 
     intake->spin();
+    leds->send_forward();
 }
 
 void shooter_callback()
@@ -38,6 +41,7 @@ void shooter_callback()
     intake->stop();
 
     shooter->shoot();
+    leds->send_backward();
 }
 
 void pitcher_callback()
@@ -46,6 +50,7 @@ void pitcher_callback()
     shooter->stop();
 
     pitcher->raise();
+    leds->stop();
 }
 
 void setup()
@@ -58,12 +63,14 @@ void setup()
     intake  = new Intake(intake_motor);
     shooter = new Shooter(shooter_flywheel);
     pitcher = new Pitcher(pitcher_motor);
+    leds    = new AddressableLeds(CHASSIS_LEDS_PIN, CHASSIS_LEDS_LENGTH);
+    leds->set_frequency(1.0);
 }
 
 void loop()
 {
     // put your main code here, to run repeatedly:
-    if ((millis() - last_tick_time) > 200)
+    if ((millis() - last_tick_time) > 20)
     {
         if ((millis() - last_state_transition_time) > 5000U)
         {
@@ -109,6 +116,7 @@ void loop()
         intake->tick();
         shooter->tick();
         pitcher->tick();
+        leds->tick();
 
         last_tick_time = millis();
     }
