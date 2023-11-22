@@ -46,11 +46,20 @@ void rainbow(const double phase, Adafruit_NeoPixel *leds)
     for (int i = 0; i < leds->numPixels(); i++)
     {
         // remap phased hue to be within 0 and 1
-        double hue_scale = (i * resolution + phase);
-        hue_scale        = hue_scale - (int)hue_scale;
-
         // scale and set hue
-        long pixel_hue = 65535 * hue_scale;
+        long pixel_hue = 65535 * fractional(i * resolution + phase);
+        leds->setPixelColor(i, leds->gamma32(leds->ColorHSV(pixel_hue)));
+    }
+    leds->show();
+}
+
+void solid_rainbow(const double phase, Adafruit_NeoPixel *leds)
+{
+    for (int i = 0; i < leds->numPixels(); i++)
+    {
+        // remap phased hue to be within 0 and 1
+        // scale and set hue
+        long pixel_hue = 65535 * fractional(phase);
         leds->setPixelColor(i, leds->gamma32(leds->ColorHSV(pixel_hue)));
     }
     leds->show();
@@ -65,6 +74,7 @@ void pulse(const double phase, Adafruit_NeoPixel *leds, const unsigned char r, c
     }
     leds->show();
 }
+
 void stripes(const double phase, Adafruit_NeoPixel *leds, const unsigned char r, const unsigned char g, unsigned char b)
 {
     const int          strip_width = 4;
@@ -88,6 +98,7 @@ void stripes(const double phase, Adafruit_NeoPixel *leds, const unsigned char r,
     }
     leds->show();
 }
+
 void solid(Adafruit_NeoPixel *leds, const unsigned char r, const unsigned char g, const unsigned char b)
 {
     const auto n = leds->numPixels();
@@ -110,30 +121,107 @@ void tick_motion(const double phase)
 {
     if (phase < 0.05)
     {
+        const auto segment_phase = (phase - 0.0) / 0.05;
         // Pulse all lights as warning
         stop_all_motors();
-        pulse(fractional(phase / 0.05 * 5), intake_leds, 255, 0, 0);
-        solid(shooter_leds, 0, 0, 0);
-        solid(chassis_leds, 100, 100, 100);
+        pulse(fractional(segment_phase * 5), intake_leds, 255, 0, 0);
+        pulse(fractional(segment_phase * 2), shooter_leds, 0, 0, 255);
+        pulse(fractional(segment_phase * 2), chassis_leds, 0, 0, 255);
     }
     else if (phase < 0.15)
     {
+        // Intaking
         const auto segment_phase = (phase - 0.05) / 0.1;
         // Intake on
         stripes(fractional(segment_phase), intake_leds, 0, 255, 0);
         pulse(fractional(segment_phase * 5), shooter_leds, 255, 0, 0);
+        solid_rainbow(fractional(phase * 2), chassis_leds);
         // Ramp up...
         const double duty = min(segment_phase * 2, 0.5);
         intake_motor.writeMicroseconds(throttle(duty));
         shooter_motor.writeMicroseconds(throttle(-0.1));
+
+        // Bring tilt down if not already
+        if (digitalRead(TILT_LOWER_LIMIT_PIN))
+        {
+            // Limit switches are high until pressed
+            tilt_motor.writeMicroseconds(throttle(-0.1));
+        }
+        else
+        {
+            tilt_motor.writeMicroseconds(throttle(0));
+        }
     }
     else if (phase < 0.25)
     {
+        // "Tracking" target
         intake_motor.writeMicroseconds(throttle(0));
         shooter_motor.writeMicroseconds(throttle(0));
         solid(intake_leds, 0, 0, 0);
+        solid_rainbow(fractional(phase * 2), chassis_leds);
+    }
+    else if (phase < 0.85)
+    {
+        const auto segment_phase = (phase - 0.25) / 0.6;
+        // "tracking"
+        pulse(fractional(segment_phase * 5), shooter_leds, 255, 255, 128); // slow pulse yellow
 
-        // More stuff...
+        // two cycles of sin curve to get up and down
+        double desired_throttle = sin(2.0 * 3.14159 * segment_phase * 2);
+        // apply decay to make the amplitude decrease with time
+        desired_throttle *= pow(2.0, -segment_phase * 5.0);
+
+        // Check we haven't hit a limit switch
+        if (digitalRead(TILT_LOWER_LIMIT_PIN))
+        {
+            // Limit switches are high until pressed
+            desired_throttle = max(desired_throttle, 0.0);
+        }
+        if (digitalRead(TILT_UPPER_LIMIT_PIN))
+        {
+            // Limit switches are high until pressed
+            desired_throttle = min(desired_throttle, 0.0);
+        }
+        tilt_motor.writeMicroseconds(throttle(desired_throttle));
+
+        solid_rainbow(fractional(phase * 2), chassis_leds);
+    }
+    else if (phase < 0.90)
+    {
+        const auto segment_phase = (phase - 0.85) / 0.05;
+        // Shooter warning
+        pulse(fractional(segment_phase * 5), shooter_leds, 255, 0, 0);
+
+        solid_rainbow(fractional(phase * 2), chassis_leds);
+    }
+    else if (phase < 0.95)
+    {
+        const auto segment_phase = (phase - 0.90) / 0.05;
+        // Shooter fire
+        pulse(fractional(segment_phase * 10), shooter_leds, 255, 0, 0);
+        shooter_motor.writeMicroseconds(throttle(segment_phase));
+
+        solid_rainbow(fractional(phase * 2), chassis_leds);
+    }
+    else
+    {
+        const auto segment_phase = (phase - 0.95) / 0.05;
+        // Green pulse to show we are done
+        shooter_motor.writeMicroseconds(throttle(0));
+
+        // Bring tilt down
+        if (digitalRead(TILT_LOWER_LIMIT_PIN))
+        {
+            // Limit switches are high until pressed
+            tilt_motor.writeMicroseconds(throttle(-0.1));
+        }
+        else
+        {
+            tilt_motor.writeMicroseconds(throttle(0));
+        }
+        pulse(fractional(segment_phase * 5), intake_leds, 0, 255, 0);
+        pulse(fractional(segment_phase * 2), shooter_leds, 0, 255, 0);
+        pulse(fractional(segment_phase * 2), chassis_leds, 0, 255, 0);
     }
 }
 
